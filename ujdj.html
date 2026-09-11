@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบริหารจัดการแผนการสอนและหลักสูตร</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f4f6f9;
+            padding-bottom: 60px;
+        }
+
+        .box-container {
+            max-width: 950px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            margin-top: 30px;
+        }
+
+        .hidden-view {
+            display: none !important;
+        }
+
+        .btn-role {
+            padding: 25px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+
+        .btn-role:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-card {
+            border-left: 5px solid;
+            border-radius: 10px;
+        }
+
+        .dynamic-block {
+            border-left: 4px solid #0d6efd;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+
+<body onload="checkLogin()">
+    <div class="container">
+        <!-- หน้า Welcome -->
+        <div id="view-welcome" class="box-container text-center" style="max-width: 550px; margin-top: 80px;">
+            <img src="https://i.postimg.cc/wRgTn5JN/image.png" alt="โลโก้วิทยาลัย"
+                style="width: 130px; height: auto; margin-bottom: 20px;">
+            <h3 class="fw-bold text-primary mb-2">วิทยาลัยเทคนิคระนอง</h3>
+            <p class="text-muted mb-4">ระบบบริหารจัดการแผนการสอนและการพัฒนาหลักสูตร</p>
+            <div class="d-grid gap-3 mb-4">
+                <button class="btn btn-outline-success btn-role" onclick="showLogin('ครู')">👨‍🏫
+                    เข้าสู่ระบบสำหรับครูผู้สอน</button>
+                <button class="btn btn-outline-primary btn-role" onclick="showLogin('ผู้บริหาร')">🏢
+                    เข้าสู่ระบบสำหรับผู้บริหาร</button>
+            </div>
+            <div class="border-top pt-3">
+                <p class="mb-0 text-muted">ยังไม่มีบัญชีผู้ใช้งาน? <a href="#"
+                        class="fw-bold text-decoration-none text-success"
+                        onclick="switchView('view-register')">ลงทะเบียนสำหรับครูผู้สอนที่นี่</a></p>
+            </div>
+        </div>
+
+        <!-- หน้าลงทะเบียน -->
+        <div id="view-register" class="box-container hidden-view" style="max-width: 650px;">
+            <h4 class="fw-bold text-center text-success mb-4">📝 ลงทะเบียนบัญชีผู้ใช้ใหม่ (สำหรับครู)</h4>
+            <form onsubmit="handleRegister(event)">
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="form-label">ชื่อผู้ใช้ (Username)</label><input type="text"
+                            class="form-control" id="reg-username" required placeholder="ภาษาอังกฤษ/ตัวเลข"></div>
+                    <div class="col-md-6"><label class="form-label">รหัสผ่าน (Password)</label><input type="password"
+                            class="form-control" id="reg-password" required></div>
+                    <div class="col-md-12"><label class="form-label">ชื่อ - นามสกุล</label><input type="text"
+                            class="form-control" id="reg-name" required placeholder="เช่น นายสมชาย ใจดี"></div>
+
+                    <div class="col-md-4">
+                        <label class="form-label text-primary fw-bold">ประเภทวิชา</label>
+                        <select class="form-select border-primary" id="reg-courseType" required
+                            onchange="updateRegMajorOptions()">
+                            <option value="" disabled selected>-- เลือก --</option>
+                            <option value="อุตสาหกรรม">อุตสาหกรรม</option>
+                            <option value="พาณิชยกรรม/บริหารธุรกิจ">พาณิชยกรรม/บริหารธุรกิจ</option>
+                            <option value="อุตสาหกรรมท่องเที่ยว">อุตสาหกรรมท่องเที่ยว</option>
+                            <option value="อุตสาหกรรมดิจิทัลเเละเทคโนโลยีสารสนเทศ">
+                                อุตสาหกรรมดิจิทัลเเละเทคโนโลยีสารสนเทศ</option>
+                            <option value="วิชาสามัญสัมพันธ์">วิชาสามัญสัมพันธ์</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-primary fw-bold">สาขาวิชา</label>
+                        <select class="form-select border-primary" id="reg-major" required
+                            onchange="updateRegFieldAuto()">
+                            <option value="" disabled selected>-- เลือกสาขาวิชา --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-secondary fw-bold">สาขางาน</label>
+                        <input type="text" class="form-control bg-light" id="reg-field" required readonly
+                            placeholder="อัตโนมัติ">
+                    </div>
+                </div>
+                <div class="mt-4 row g-2">
+                    <div class="col-6"><button type="submit" class="btn btn-success w-100 py-2"
+                            id="btnReg">ยืนยันลงทะเบียน</button></div>
+                    <div class="col-6"><button type="button" class="btn btn-secondary w-100 py-2"
+                            onclick="switchView('view-welcome')">ย้อนกลับ</button></div>
+                </div>
+            </form>
+        </div>
+
+        <!-- หน้า Login -->
+        <div id="view-login" class="box-container hidden-view" style="max-width: 450px; margin-top: 60px;">
+            <h4 class="fw-bold text-center mb-2" id="login-title">🔐 เข้าสู่ระบบ</h4>
+            <p class="text-center text-muted small mb-4">กรุณากรอกข้อมูลเพื่อยืนยันตัวตน</p>
+            <form onsubmit="handleLogin(event)">
+                <div class="mb-3"><label class="form-label">ชื่อผู้ใช้ (Username)</label><input type="text"
+                        class="form-control" id="login-username" required></div>
+                <div class="mb-4"><label class="form-label">รหัสผ่าน (Password)</label><input type="password"
+                        class="form-control" id="login-password" required></div>
+                <div class="row g-2">
+                    <div class="col-6"><button type="submit" class="btn btn-primary w-100 py-2"
+                            id="btnLogin">เข้าสู่ระบบ</button></div>
+                    <div class="col-6"><button type="button" class="btn btn-secondary w-100 py-2"
+                            onclick="switchView('view-welcome')">ย้อนกลับ</button></div>
+                </div>
+            </form>
+        </div>
+
+        <!-- หน้า Main Hub -->
+        <div id="view-main-hub" class="hidden-view">
+            <div class="box-container d-flex justify-content-between align-items-center mb-4 py-3">
+                <div class="d-flex align-items-center gap-3">
+                    <img src="https://i.postimg.cc/wRgTn5JN/image.png" alt="โลโก้"
+                        style="width: 50px; height: 50px; object-fit: contain;">
+                    <div>
+                        <h5 class="mb-0 fw-bold">สวัสดีครับ: <span id="display-user-name" class="text-primary"></span>
+                        </h5>
+                        <small class="text-muted">ระบบปฏิบัติการตำแหน่ง: <span id="display-user-role"
+                                class="badge bg-secondary"></span></small>
+                    </div>
+                </div>
+                <button class="btn btn-danger btn-sm fw-bold" onclick="handleLogout()">🚪 ออกจากระบบ</button>
+            </div>
+
+            <!-- ส่วนของครู -->
+            <div id="hub-teacher" class="hidden-view">
+                <div class="box-container text-center mb-4">
+                    <h4 class="fw-bold text-dark mb-4">เลือกรายการบริการจัดการข้อมูล</h4>
+                    <div class="row g-3">
+                        <div class="col-md-6"><button class="btn btn-success w-100 py-4 fw-bold fs-5 shadow-sm"
+                                onclick="openSubmitForm('แผนการสอน')">➕ ส่งแผนการสอน</button></div>
+                        <div class="col-md-6"><button class="btn btn-info text-white w-100 py-4 fw-bold fs-5 shadow-sm"
+                                onclick="openSubmitForm('การพัฒนาหลักสูตร')">➕ ส่งการพัฒนาหลักสูตร</button></div>
+                    </div>
+                </div>
+                <div class="box-container">
+                    <h5 class="fw-bold text-secondary mb-3">📋 ประวัติรายการคลังผลงานที่คุณจัดส่ง</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" style="font-size: 0.9rem;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ประเภทงาน</th>
+                                    <th>ภาคเรียน/ปีการศึกษา</th>
+                                    <th>รหัส/ชื่อวิชา</th>
+                                    <th>ระดับ</th>
+                                    <th>วันที่ส่ง</th>
+                                    <th>สถานะผลตรวจ</th>
+                                    <th class="text-center">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teacherTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ฟอร์มส่งงาน (ของครู) -->
+            <div id="form-work-submission" class="box-container hidden-view">
+                <h4 class="fw-bold text-success mb-4" id="form-submission-title">ส่งงาน</h4>
+                <form onsubmit="handleSubmitWork(event)">
+                    <!-- ข้อมูลส่วนกลาง -->
+                    <div class="row g-3 border-bottom pb-4 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label text-primary fw-bold">ประเภทวิชา</label>
+                            <select class="form-select border-primary" id="work-courseType" required
+                                onchange="updateMajorOptions()">
+                                <option value="" disabled selected>-- เลือก --</option>
+                                <option value="อุตสาหกรรม">อุตสาหกรรม</option>
+                                <option value="พาณิชยกรรม/บริหารธุรกิจ">พาณิชยกรรม/บริหารธุรกิจ</option>
+                                <option value="อุตสาหกรรมท่องเที่ยว">อุตสาหกรรมท่องเที่ยว</option>
+                                <option value="อุตสาหกรรมดิจิทัลเเละเทคโนโลยีสารสนเทศ">
+                                    อุตสาหกรรมดิจิทัลเเละเทคโนโลยีสารสนเทศ</option>
+                                <option value="วิชาสามัญสัมพันธ์">วิชาสามัญสัมพันธ์</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-primary fw-bold">สาขาวิชา</label>
+                            <select class="form-select border-primary" id="work-major" required
+                                onchange="updateFieldAuto()">
+                                <option value="" disabled selected>-- เลือกสาขาวิชา --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-secondary fw-bold">สาขางาน</label>
+                            <input type="text" class="form-control bg-light" id="work-field" required readonly
+                                placeholder="อัตโนมัติ">
+                        </div>
+
+                        <!-- ช่องคำนวณจำนวนวิชาแบบอัจฉริยะ -->
+                        <div class="col-md-12">
+                            <div class="row g-3" id="subject-count-wrapper"></div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">ภาคเรียน</label>
+                            <select class="form-select" id="work-semester" required>
+                                <option value="ภาคเรียนที่ 1">ภาคเรียนที่ 1</option>
+                                <option value="ภาคเรียนที่ 2">ภาคเรียนที่ 2</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">ปีการศึกษา</label>
+                            <select class="form-select" id="work-year" required>
+                                <option value="2569">2569</option>
+                                <option value="2570">2570</option>
+                                <option value="2571">2571</option>
+                                <option value="2572">2572</option>
+                                <option value="2573">2573</option>
+                                <option value="2574">2574</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- คอนเทนเนอร์สำหรับใส่ข้อมูลแยกตามรายวิชา -->
+                    <div id="dynamic-subjects-container"></div>
+
+                    <div class="mt-4 row g-2">
+                        <div class="col-6"><button type="submit" class="btn btn-success w-100 py-2"
+                                id="btnSubmitWork">ส่งข้อมูล</button></div>
+                        <div class="col-6"><button type="button" class="btn btn-secondary w-100 py-2"
+                                onclick="backToTeacherHub()">ยกเลิก/ย้อนกลับ</button></div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ส่วนของผู้บริหาร -->
+            <div id="hub-academic" class="hidden-view">
+                <div class="box-container text-center mb-4 py-3">
+                    <h4 class="fw-bold mb-3 text-primary">ศูนย์ตรวจสอบและคัดกรองข้อมูลสำหรับผู้บริหาร</h4>
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                        <button class="btn btn-outline-success px-3 fw-bold active" id="btn-tab-plan"
+                            onclick="switchAcademicTab('แผนการสอน')">📑 ตรวจแผนการสอน</button>
+                        <button class="btn btn-outline-info px-3 fw-bold" id="btn-tab-curriculum"
+                            onclick="switchAcademicTab('การพัฒนาหลักสูตร')">📊 ตรวจการพัฒนาหลักสูตร</button>
+                        <button class="btn btn-outline-warning px-3 fw-bold text-dark" id="btn-tab-summary"
+                            onclick="switchAcademicTab('สรุปข้อมูล')">📈 สรุปภาพรวมการส่งงาน</button>
+                    </div>
+                </div>
+
+                <!-- คอนเทนเนอร์ตารางตรวจสอบ -->
+                <div class="box-container" id="academic-table-container">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-secondary mb-0" id="academic-table-title">รายการงานรอการตรวจสอบ</h5>
+                        <div><input type="text" class="form-control border-secondary" id="search-teacher"
+                                placeholder="🔍 ค้นหาชื่อครู..." onkeyup="filterAcademicTable()"></div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" style="font-size: 0.9rem;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ชื่อครูผู้ส่ง</th>
+                                    <th>ภาคเรียน/ปีการศึกษา</th>
+                                    <th>รหัส/ชื่อวิชา</th>
+                                    <th>ระดับผู้เรียน</th>
+                                    <th>สถานะ/วันที่ส่ง</th>
+                                    <th class="text-center">ตรวจสอบ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="academicTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- คอนเทนเนอร์หน้าสรุปข้อมูล -->
+                <div class="box-container hidden-view" id="academic-summary-container">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <h5 class="fw-bold text-dark mb-0">📊 สรุปข้อมูลการจัดส่งเอกสาร</h5>
+                        <select class="form-select form-select-sm w-auto" id="summary-view-selector"
+                            onchange="renderSelectedSummaryView()">
+                            <option value="overall">ภาพรวมวิทยาลัย</option>
+                            <option value="department">สรุปแยกตามสาขาวิชา</option>
+                            <option value="individual">สรุปแยกรายบุคคล</option>
+                        </select>
+                    </div>
+                    <div id="summary-content-body"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal ผู้บริหารตรวจงาน -->
+    <div class="modal fade" id="previewModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold">🔍 รายละเอียดข้อมูลและการตรวจเอกสาร</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12"><strong>วิชา:</strong> <span id="md-course"
+                                class="text-primary fw-bold"></span></div>
+                        <div class="col-md-6"><strong>ผู้จัดส่ง:</strong> <span id="md-teacher"></span></div>
+                        <div class="col-md-6"><strong>ประเภทงาน:</strong> <span id="md-type"></span></div>
+                        <div class="col-md-6"><strong>ประเภทวิชา:</strong> <span id="md-courseType"></span></div>
+                        <div class="col-md-6"><strong>ภาคเรียน/ปีการศึกษา:</strong> <span id="md-semester"></span></div>
+                        <div class="col-md-6"><strong>สาขาวิชา:</strong> <span id="md-major"></span></div>
+                        <div class="col-md-6"><strong>สาขางาน:</strong> <span id="md-field"></span></div>
+                        <div class="col-md-6"><strong>ระดับชั้น:</strong> <span id="md-level"></span></div>
+                        <div class="col-md-6"><strong>ท/ป/น:</strong> <span id="md-credits"></span></div>
+                    </div>
+                    <div class="text-center p-2 bg-dark bg-opacity-10 rounded border mb-3">
+                        <h6 class="fw-bold text-start text-dark mb-2">🖼️ ไฟล์แนบหลักฐาน:</h6>
+                        <div id="md-file-container"></div>
+                    </div>
+                    <div class="p-3 bg-light rounded border">
+                        <h6 class="fw-bold text-dark mb-2">⚙️ จัดการผลการตรวจสอบเอกสาร:</h6>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success px-4 fw-bold" onclick="submitReview('อนุมัติ')">✅
+                                อนุมัติผ่าน</button>
+                            <button class="btn btn-danger px-4 fw-bold" onclick="toggleRejectForm(true)">❌
+                                ไม่อนุมัติ</button>
+                        </div>
+                        <div id="reject-reason-block" class="mt-3" style="display: none;">
+                            <label class="form-label text-danger fw-bold small">ระบุเหตุผลที่ไม่ผ่านอนุมัติ *</label>
+                            <textarea class="form-control mb-2" id="md-reject-comment" rows="2"></textarea>
+                            <button class="btn btn-dark btn-sm" onclick="submitReview('ไม่อนุมัติ')">💾
+                                บันทึกผลไม่อนุมัติ</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ⚠️ ลิงก์ GAS ของคุณ
+        const API_URL = "https://script.google.com/macros/s/AKfycbzpWJMBqbea2uzLCqQ0OX2CWs8_M2jQQBuQXQESW1tKSsgEw8S6Nmi34Hd9J-pvQjnQ/exec";
+
+        let currentRoleContext = ""; let activeSubmissionType = "แผนการสอน";
+        let teacherRecords = []; let teacherTarget = 0; // เก็บเป้าหมายของครู
+        let isEditMode = false; let editTargetId = ""; let currentReviewId = "";
+        let globalSummaryData = null;
+
+        const courseData = {
+            "อุตสาหกรรม": ["ช่างยนต์", "ช่างกลโรงงาน", "ช่างเชื่อมโลหะ", "ช่างไฟฟ้า", "ช่างอิเล็กทรอนิกส์", "ช่างก่อสร้าง", "สถาปัตยกรรม", "เทคนิคเครื่องกล", "เทคนิคการผลิต", "ไฟฟ้า", "เทคโนโลยีอิเล็กทรอนิกส์"],
+            "พาณิชยกรรม/บริหารธุรกิจ": ["การบัญชี", "การตลาด", "การเลขานุการ", "การจัดการสำนักงานดิจิทัล"],
+            "อุตสาหกรรมท่องเที่ยว": ["การโรงแรม"],
+            "อุตสาหกรรมดิจิทัลเเละเทคโนโลยีสารสนเทศ": ["เทคโนโลยีธุรกิจดิจิทัล"],
+            "วิชาสามัญสัมพันธ์": ["วิชาสามัญสัมพันธ์"]
+        };
+
+        function escapeHTML(str) { return str == null ? "" : str.toString().replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])); }
+        function formatSemesterDisplay(val) {
+            if (!val) return "-"; val = val.toString().trim().replace(/^'/, '');
+            if (val.includes("T") && val.includes("Z")) { try { let d = new Date(val); if (!isNaN(d.getTime())) return (d.getMonth() + 1) + "/" + d.getFullYear(); } catch (e) { } }
+            return val;
+        }
+        function formatDisplayDate(dStr) {
+            if (!dStr || dStr === "-") return { d: "-", t: "" };
+            let cStr = dStr.toString().replace(/^'/, '');
+            if (cStr.includes("T") || cStr.includes("-")) {
+                try { let d = new Date(cStr); if (!isNaN(d.getTime())) { let y = d.getFullYear(); if (y < 2500) y += 543; return { d: `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${y}`, t: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} น.` }; } } catch (e) { }
+            }
+            let p = cStr.split(' '); return { d: p[0] || "-", t: p.length > 1 ? p.slice(1).join(' ') : '' };
+        }
+
+        function updateRegMajorOptions() {
+            const ct = document.getElementById('reg-courseType').value; const ms = document.getElementById('reg-major');
+            ms.innerHTML = '<option value="" disabled selected>-- เลือกสาขาวิชา --</option>'; document.getElementById('reg-field').value = '';
+            if (courseData[ct]) courseData[ct].forEach(m => ms.innerHTML += `<option value="${m}">${m}</option>`);
+        }
+        function updateRegFieldAuto() { document.getElementById('reg-field').value = document.getElementById('reg-major').value; }
+
+        function updateMajorOptions(sel = "") {
+            const ct = document.getElementById('work-courseType').value; const ms = document.getElementById('work-major');
+            ms.innerHTML = '<option value="" disabled selected>-- เลือกสาขาวิชา --</option>'; document.getElementById('work-field').value = '';
+            if (courseData[ct]) courseData[ct].forEach(m => { let o = document.createElement('option'); o.value = o.innerText = m; ms.appendChild(o); });
+            if (sel) {
+                if (!Array.from(ms.options).some(o => o.value === sel)) ms.innerHTML += `<option value="${sel}">${sel}</option>`;
+                ms.value = sel; updateFieldAuto();
+            }
+        }
+        function updateFieldAuto() { document.getElementById('work-field').value = document.getElementById('work-major').value; }
+
+        function switchView(viewId) {
+            ['view-welcome', 'view-register', 'view-login', 'view-main-hub'].forEach(id => document.getElementById(id).classList.add('hidden-view'));
+            document.getElementById(viewId).classList.remove('hidden-view');
+        }
+
+        function showLogin(role) {
+            currentRoleContext = role;
+            document.getElementById('login-title').innerText = "🔐 เข้าสู่ระบบสำหรับ" + (role === "ครู" ? "ครูผู้สอน" : "ผู้บริหาร");
+            document.getElementById('login-username').value = document.getElementById('login-password').value = "";
+            switchView('view-login');
+        }
+        function checkLogin() { if (sessionStorage.getItem("isLoggedIn") === "true") renderHub(sessionStorage.getItem("userRole"), sessionStorage.getItem("userName")); }
+
+        function renderHub(role, name) {
+            switchView('view-main-hub');
+            document.getElementById('display-user-name').innerText = escapeHTML(name); document.getElementById('display-user-role').innerText = escapeHTML(role);
+            ['hub-teacher', 'form-work-submission', 'hub-academic'].forEach(id => document.getElementById(id).classList.add('hidden-view'));
+            if (role === "ครู") { document.getElementById('hub-teacher').classList.remove('hidden-view'); loadTeacherHistory(); }
+            else if (role === "ผู้บริหาร") { document.getElementById('hub-academic').classList.remove('hidden-view'); switchAcademicTab('แผนการสอน'); }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault(); const btn = document.getElementById('btnReg'); btn.disabled = true; btn.innerText = "กำลังประมวลผล...";
+            const payload = {
+                action: "register", username: document.getElementById('reg-username').value.trim(), password: document.getElementById('reg-password').value,
+                name: document.getElementById('reg-name').value.trim(), courseType: document.getElementById('reg-courseType').value,
+                major: document.getElementById('reg-major').value, field: document.getElementById('reg-field').value.trim()
+            };
+            try {
+                const r = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload), headers: { "Content-Type": "text/plain" } });
+                const res = await r.json(); alert(res.message); if (res.success) switchView('view-welcome');
+            } catch (err) { alert("เชื่อมต่อขัดข้อง"); } finally { btn.disabled = false; btn.innerText = "ยืนยันลงทะเบียน"; }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault(); const btn = document.getElementById('btnLogin'); btn.disabled = true; btn.innerText = "กำลังตรวจสอบ...";
+            try {
+                const r = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "login", username: document.getElementById('login-username').value.trim(), password: document.getElementById('login-password').value, role: currentRoleContext }), headers: { "Content-Type": "text/plain" } });
+                const res = await r.json();
+                if (res.success) {
+                    sessionStorage.setItem("isLoggedIn", "true"); sessionStorage.setItem("userName", res.name);
+                    sessionStorage.setItem("userUsername", res.username); sessionStorage.setItem("userRole", res.role);
+                    renderHub(res.role, res.name);
+                } else alert(res.message);
+            } catch (err) { alert("ระบบเชื่อมต่อขัดข้อง"); } finally { btn.disabled = false; btn.innerText = "เข้าสู่ระบบ"; }
+        }
+        function handleLogout() { sessionStorage.clear(); window.location.reload(); }
+
+        // --- ระบบคำนวณสิทธิ์การส่ง (ตอนตั้งเป้าหมายครั้งแรก) ---
+        function updateSubmitCountOptions() {
+            let total = parseInt(document.getElementById('work-total-subject').value) || 0;
+            let pastSubmissions = teacherRecords.filter(r => r.type === activeSubmissionType).length;
+            let remaining = total - pastSubmissions;
+
+            let submitSelect = document.getElementById('work-submit-count');
+            submitSelect.innerHTML = '<option value="" disabled selected>-- เลือก --</option>';
+
+            if (total > 0 && remaining > 0) {
+                for (let i = 1; i <= remaining; i++) submitSelect.innerHTML += `<option value="${i}">${i} วิชา</option>`;
+                document.getElementById('btnSubmitWork').style.display = 'block';
+            } else if (remaining <= 0) {
+                submitSelect.innerHTML += `<option value="0" disabled>คุณส่งครบแล้ว</option>`;
+                document.getElementById('btnSubmitWork').style.display = 'none';
+            }
+            renderDynamicSubjectFields();
+        }
+
+        function renderDynamicSubjectFields(forceCount = 0, editData = null) {
+            const container = document.getElementById('dynamic-subjects-container'); container.innerHTML = "";
+            let num = editData ? 1 : (parseInt(document.getElementById('work-submit-count').value) || 0);
+            for (let i = 1; i <= num; i++) {
+                let title = editData ? "📝 ข้อมูลรายวิชาที่ต้องการแก้ไข" : `📚 ข้อมูลรายวิชาที่ ${i}`;
+                let nameVal = editData ? editData.courseName : ""; let codeVal = editData ? editData.courseCode : "";
+                let credVal = editData ? editData.credits : ""; let levelVal = editData ? editData.level : "ปวช.1";
+                container.innerHTML += `
+                <div class="dynamic-block p-4 mb-4 rounded shadow-sm">
+                    <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">${title}</h5>
+                    <div class="row g-3">
+                        <div class="col-md-8"><label class="form-label">ชื่อวิชา</label><input type="text" class="form-control" id="work-courseName-${i}" value="${nameVal}" required></div>
+                        <div class="col-md-4"><label class="form-label">รหัสวิชา</label><input type="text" class="form-control" id="work-courseCode-${i}" value="${codeVal}" required placeholder="เช่น 20001-2001"></div>
+                        <div class="col-md-6"><label class="form-label">ท/ป/น</label><input type="text" class="form-control" id="work-credits-${i}" value="${credVal}" required placeholder="เช่น 2-2-3"></div>
+                        <div class="col-md-6"><label class="form-label">ระดับผู้เรียน</label><select class="form-select" id="work-level-${i}" required>
+                            <option value="ปวช.1" ${levelVal === 'ปวช.1' ? 'selected' : ''}>ปวช.1</option><option value="ปวช.2" ${levelVal === 'ปวช.2' ? 'selected' : ''}>ปวช.2</option><option value="ปวช.3" ${levelVal === 'ปวช.3' ? 'selected' : ''}>ปวช.3</option>
+                            <option value="ปวช.1(ม.6)" ${levelVal === 'ปวช.1(ม.6)' ? 'selected' : ''}>ปวช.1(ม.6)</option><option value="ปวช.2(ม.6)" ${levelVal === 'ปวช.2(ม.6)' ? 'selected' : ''}>ปวช.2(ม.6)</option>
+                            <option value="ปวส.1" ${levelVal === 'ปวส.1' ? 'selected' : ''}>ปวส.1</option><option value="ปวส.2" ${levelVal === 'ปวส.2' ? 'selected' : ''}>ปวส.2</option><option value="ปวส.1(ทวิ)" ${levelVal === 'ปวส.1(ทวิ)' ? 'selected' : ''}>ปวส.1(ทวิ)</option><option value="ปวส.2(ทวิ)" ${levelVal === 'ปวส.2(ทวิ)' ? 'selected' : ''}>ปวส.2(ทวิ)</option>
+                        </select></div>
+                        <div class="col-md-12"><label class="form-label fw-bold text-primary">📂 แนบไฟล์เอกสาร (จำกัดไฟล์ละไม่เกิน 5MB)</label><input type="file" class="form-control border-primary" id="work-file-${i}" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" ${editData ? '' : 'required'}>
+                        ${editData ? '<small class="text-muted">*หากไม่ต้องการเปลี่ยนไฟล์เดิม ไม่ต้องเลือกไฟล์ใหม่</small>' : ''}</div>
+                    </div>
+                </div>`;
+            }
+        }
+
+        function openSubmitForm(type) {
+            isEditMode = false; activeSubmissionType = type;
+            document.getElementById('form-submission-title').innerText = "📤 ส่ง" + type;
+            document.getElementById('btnSubmitWork').innerText = "ส่ง" + type;
+            document.getElementById('btnSubmitWork').style.display = "block";
+
+            let wrapper = document.getElementById('subject-count-wrapper');
+            wrapper.style.display = "flex";
+
+            let pastSubmissions = teacherRecords.filter(r => r.type === type).length;
+
+            // กรณีที่ครูยังไม่เคยตั้งเป้าหมายวิชาเลย (ค่าเป็น 0)
+            if (teacherTarget === 0) {
+                wrapper.innerHTML = `
+                    <div class="col-md-6">
+                        <label class="form-label text-danger fw-bold">เป้าหมายจำนวนวิชาทั้งหมด *เลือกครั้งแรก*</label>
+                        <select class="form-select border-danger" id="work-total-subject" onchange="updateSubmitCountOptions()" required>
+                            <option value="" disabled selected>-- เลือก --</option>
+                            <option value="1">1 วิชา</option><option value="2">2 วิชา</option><option value="3">3 วิชา</option><option value="4">4 วิชา</option><option value="5">5 วิชา</option>
+                            <option value="6">6 วิชา</option><option value="7">7 วิชา</option><option value="8">8 วิชา</option><option value="9">9 วิชา</option><option value="10">10 วิชา</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-primary fw-bold">จำนวนที่ต้องการส่งครั้งนี้</label>
+                        <select class="form-select border-primary" id="work-submit-count" onchange="renderDynamicSubjectFields()" required>
+                            <option value="" disabled selected>-- เลือก --</option>
+                        </select>
+                    </div>
+                `;
+            } else {
+                // กรณีที่ครูเคยตั้งเป้าหมายแล้ว ให้แสดงจำนวนที่เหลือให้เลือกได้เลย
+                let remaining = teacherTarget - pastSubmissions;
+                if (remaining <= 0) {
+                    wrapper.innerHTML = `
+                        <div class="col-md-12 p-3 bg-light border border-success rounded text-center">
+                            <h5 class="text-success fw-bold mb-0">✅ คุณส่ง ${type} ครบเป้าหมาย ${teacherTarget} วิชาแล้ว</h5>
+                        </div>
+                        <input type="hidden" id="work-total-subject" value="${teacherTarget}">
+                        <input type="hidden" id="work-submit-count" value="0">
+                    `;
+                    document.getElementById('btnSubmitWork').style.display = "none";
+                } else {
+                    let opts = '<option value="" disabled selected>-- เลือกจำนวน --</option>';
+                    for (let i = 1; i <= remaining; i++) { opts += `<option value="${i}">${i} วิชา</option>`; }
+                    wrapper.innerHTML = `
+                        <div class="col-md-12">
+                            <div class="alert alert-info py-2 mb-2"><small>🎯 <strong>เป้าหมายรวม:</strong> ${teacherTarget} วิชา | ✅ <strong>ส่งแล้ว:</strong> ${pastSubmissions} วิชา | 📌 <strong>ส่งเพิ่มได้อีกสูงสุด:</strong> ${remaining} วิชา</small></div>
+                            <label class="form-label text-primary fw-bold">ระบุจำนวนวิชาที่ต้องการส่งเพิ่มในครั้งนี้</label>
+                            <select class="form-select border-primary" id="work-submit-count" onchange="renderDynamicSubjectFields()" required>
+                                ${opts}
+                            </select>
+                            <input type="hidden" id="work-total-subject" value="${teacherTarget}">
+                        </div>
+                    `;
+                }
+            }
+
+            document.getElementById('work-courseType').value = document.getElementById('work-field').value = ""; document.getElementById('work-major').innerHTML = '<option value="" disabled selected>-- เลือกสาขาวิชา --</option>';
+            document.getElementById('work-semester').value = "ภาคเรียนที่ 1"; document.getElementById('work-year').value = "2569"; document.getElementById('dynamic-subjects-container').innerHTML = "";
+            document.getElementById('hub-teacher').classList.add('hidden-view'); document.getElementById('form-work-submission').classList.remove('hidden-view');
+        }
+
+        function triggerEditWork(id) {
+            const item = teacherRecords.find(x => x.id.toString() === id.toString()); if (!item) return;
+            isEditMode = true; editTargetId = id; activeSubmissionType = item.type;
+            document.getElementById('form-submission-title').innerText = "✏️ แก้ไขข้อมูล" + item.type;
+            document.getElementById('btnSubmitWork').innerText = "บันทึกการเปลี่ยนแปลง";
+            document.getElementById('btnSubmitWork').style.display = "block";
+
+            document.getElementById('subject-count-wrapper').style.display = "none";
+
+            let ts = document.getElementById('work-courseType');
+            if (!Array.from(ts.options).some(o => o.value === item.courseType) && item.courseType) ts.innerHTML += `<option value="${item.courseType}">${item.courseType}</option>`;
+            ts.value = item.courseType || ""; updateMajorOptions(item.major);
+            let sp = formatSemesterDisplay(item.semester).split('/');
+            if (sp.length === 2) { document.getElementById('work-semester').value = "ภาคเรียนที่ " + sp[0]; document.getElementById('work-year').value = sp[1]; }
+            renderDynamicSubjectFields(1, item);
+            document.getElementById('hub-teacher').classList.add('hidden-view'); document.getElementById('form-work-submission').classList.remove('hidden-view');
+        }
+
+        function backToTeacherHub() { document.getElementById('form-work-submission').classList.add('hidden-view'); document.getElementById('hub-teacher').classList.remove('hidden-view'); }
+        function fileToBase64(file) { return new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => res(r.result); r.onerror = e => rej(e); }); }
+
+        async function handleSubmitWork(e) {
+            e.preventDefault();
+            let totalTarget = isEditMode ? teacherTarget : (parseInt(document.getElementById('work-total-subject')?.value) || 0);
+            let num = isEditMode ? 1 : (parseInt(document.getElementById('work-submit-count')?.value) || 0);
+
+            if (!isEditMode && (totalTarget <= 0 || num <= 0)) { alert("กรุณาระบุจำนวนวิชาให้ครบถ้วน"); return; }
+            for (let i = 1; i <= num; i++) { let f = document.getElementById(`work-file-${i}`).files[0]; if (f && f.size > 5 * 1024 * 1024) { alert(`⚠️ ไฟล์ของวิชาที่ ${i} มีขนาดใหญ่เกินไป (จำกัดไม่เกิน 5MB)`); return; } }
+            const btn = document.getElementById('btnSubmitWork'); btn.disabled = true;
+
+            try {
+                // อัปเดตเป้าหมายเฉพาะตอนที่ตั้งค่าครั้งแรก
+                if (!isEditMode && teacherTarget === 0) {
+                    btn.innerHTML = "⏳ กำลังบันทึกเป้าหมายจำนวนวิชา...";
+                    await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "updateTarget", username: sessionStorage.getItem("userUsername"), subjectCount: totalTarget }), headers: { "Content-Type": "text/plain" } });
+                }
+                const semData = "'" + document.getElementById('work-semester').value.replace('ภาคเรียนที่ ', '') + '/' + document.getElementById('work-year').value;
+                const courseType = document.getElementById('work-courseType').value; const major = document.getElementById('work-major').value; const field = document.getElementById('work-field').value.trim();
+
+                for (let i = 1; i <= num; i++) {
+                    btn.innerHTML = `⏳ กำลังประมวลผลและอัปโหลดข้อมูลวิชาที่ ${i} จาก ${num} ...`;
+                    let f = document.getElementById(`work-file-${i}`).files[0]; let fileData = null, fileName = null;
+                    if (f) { fileData = await fileToBase64(f); fileName = f.name; } else if (isEditMode) fileName = "ไม่มีการเปลี่ยนไฟล์";
+                    const payload = {
+                        action: isEditMode ? "edit" : "submit", id: isEditMode ? editTargetId : "", type: activeSubmissionType,
+                        teacherName: sessionStorage.getItem("userName"), username: sessionStorage.getItem("userUsername"),
+                        courseName: document.getElementById(`work-courseName-${i}`).value.trim(), courseCode: document.getElementById(`work-courseCode-${i}`).value.trim(),
+                        credits: document.getElementById(`work-credits-${i}`).value.trim(), level: document.getElementById(`work-level-${i}`).value,
+                        courseType: courseType, major: major, field: field, semester: semData, fileData: fileData, fileName: fileName
+                    };
+                    const r = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload), headers: { "Content-Type": "text/plain" } });
+                    const res = await r.json(); if (!res.success) { alert(`❌ เกิดข้อผิดพลาดตอนส่งวิชาที่ ${i}: ${res.message}`); break; }
+                }
+                alert(isEditMode ? "✅ บันทึกการแก้ไขสำเร็จ" : "🎉 ส่งข้อมูลเรียบร้อยแล้ว"); backToTeacherHub(); loadTeacherHistory();
+            } catch (err) { alert("เชื่อมต่ออินเทอร์เน็ตขัดข้อง กรุณาลองใหม่"); }
+            finally { btn.disabled = false; btn.innerHTML = isEditMode ? "บันทึกการเปลี่ยนแปลง" : `ส่ง${activeSubmissionType}`; }
+        }
+
+        async function loadTeacherHistory() {
+            const tbody = document.getElementById('teacherTableBody'); tbody.innerHTML = '<tr><td colspan="7" class="text-center py-3">⏳ กำลังประมวลผลดึงประวัติงาน...</td></tr>';
+            try {
+                const r = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "getData", role: "ครู", username: sessionStorage.getItem("userUsername") }), headers: { "Content-Type": "text/plain" } });
+                const data = await r.json(); tbody.innerHTML = '';
+
+                // ตรวจจับ Data Structure ใหม่ ที่ส่งเป้าหมาย (Target) แนบกลับมาด้วย
+                if (data && data.records) {
+                    teacherRecords = data.records;
+                    teacherTarget = data.target || 0; // รับเป้าหมายที่เคยบันทึกไว้มาใช้งาน
+
+                    if (teacherRecords.length === 0) return tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">ไม่พบประวัติข้อมูล</td></tr>';
+                    teacherRecords.forEach(item => {
+                        let st = (item.status || "").toString().trim(); let badge = st === 'อนุมัติ' ? '<span class="badge bg-success">✅ อนุมัติ</span>' : (st === 'รอตรวจ' || st === '-' || st === '' ? '<span class="badge bg-warning text-dark">⏳ รอตรวจ</span>' : `<span class="badge bg-danger">❌ ไม่อนุมัติ</span><br><small class="text-danger">${escapeHTML(item.comment)}</small>`);
+                        let dObj = formatDisplayDate(item.date);
+                        tbody.innerHTML += `<tr><td><strong>${escapeHTML(item.type)}</strong></td><td><span class="badge bg-dark">${formatSemesterDisplay(item.semester)}</span></td>
+                            <td><small>${escapeHTML(item.courseCode)}</small><br>${escapeHTML(item.courseName)}</td><td><span class="badge bg-light text-dark border">${escapeHTML(item.level)}</span></td>
+                            <td><div style="font-size:0.85rem; color:#555;">📅 ${dObj.d}<br>🕒 ${dObj.t}</div></td><td>${badge}</td>
+                            <td class="text-center"><button class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="triggerEditWork('${item.id}')">✏️ แก้ไขข้อมูล</button></td></tr>`;
+                    });
+                }
+            } catch (e) { tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-3">ระบบโหลดล้มเหลว</td></tr>'; }
+        }
+
+        function switchAcademicTab(type) {
+            activeSubmissionType = type;['btn-tab-plan', 'btn-tab-curriculum', 'btn-tab-summary'].forEach(id => document.getElementById(id).classList.remove('active'));
+            if (type === "สรุปข้อมูล") {
+                document.getElementById('btn-tab-summary').classList.add('active'); document.getElementById('academic-table-container').classList.add('hidden-view');
+                document.getElementById('academic-summary-container').classList.remove('hidden-view'); loadSummaryData();
+            } else {
+                document.getElementById(type === "แผนการสอน" ? 'btn-tab-plan' : 'btn-tab-curriculum').classList.add('active');
+                document.getElementById('academic-table-container').classList.remove('hidden-view'); document.getElementById('academic-summary-container').classList.add('hidden-view');
+                document.getElementById('academic-table-title').innerText = "📋 รายการข้อมูลตรวจสอบ: " + type; loadAcademicData();
+            }
+        }
+        function filterAcademicTable() { let input = document.getElementById('search-teacher').value.toLowerCase(); let rows = document.getElementById('academicTableBody').getElementsByTagName('tr'); for (let i = 0; i < rows.length; i++) rows[i].style.display = rows[i].getElementsByTagName('td')[0]?.innerText.toLowerCase().includes(input) ? "" : "none"; }
+
+        async function loadAcademicData() {
+            const tbody = document.getElementById('academicTableBody'); tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">⏳ กำลังโหลด...</td></tr>';
+            try {
+                const r = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "getData", role: "ผู้บริหาร", typeFilter: activeSubmissionType }), headers: { "Content-Type": "text/plain" } });
+                const data = await r.json(); tbody.innerHTML = '';
+                if (Array.isArray(data)) {
+                    window.academicLoadedData = data; if (data.length === 0) return tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">ไม่มีรายการ</td></tr>';
+                    data.forEach(item => {
+                        let st = (item.status || "").toString().trim(); let rowClass = st === 'อนุมัติ' ? 'table-success' : (st === 'ไม่อนุมัติ' ? 'table-danger' : '');
+                        let statusText = st === 'อนุมัติ' ? '<span class="text-success fw-bold">✅ ผ่าน</span>' : (st === 'รอตรวจ' || st === '-' || st === '' ? '<span class="text-warning fw-bold">⏳ รอตรวจ</span>' : '<span class="text-danger fw-bold">❌ ไม่ผ่าน</span>');
+                        let dObj = formatDisplayDate(item.date);
+                        tbody.innerHTML += `<tr class="${rowClass}"><td class="fw-bold text-dark">${escapeHTML(item.teacherName)}</td><td><span class="badge bg-dark">${formatSemesterDisplay(item.semester)}</span></td>
+                            <td><code class="text-secondary">${escapeHTML(item.courseCode)}</code><br>${escapeHTML(item.courseName)}</td><td><span class="badge bg-light text-dark border">${escapeHTML(item.level)}</span></td>
+                            <td style="font-size:0.85rem;">${statusText}<div class="text-muted mt-1">📅 ${dObj.d}</div></td><td class="text-center"><button class="btn btn-sm btn-primary px-3 shadow-sm" onclick="openPreviewModal('${item.id}')">🔍 ตรวจ</button></td></tr>`;
+                    });
+                }
+            } catch (e) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">โหลดล้มเหลว</td></tr>'; }
+        }
+
+        function openPreviewModal(id) {
+            const item = window.academicLoadedData.find(x => x.id.toString() === id.toString()); if (!item) return;
+            currentReviewId = id; document.getElementById('reject-reason-block').style.display = 'none'; document.getElementById('md-reject-comment').value = item.comment !== '-' ? item.comment : "";
+            document.getElementById('md-teacher').innerText = escapeHTML(item.teacherName); document.getElementById('md-type').innerText = escapeHTML(item.type);
+            document.getElementById('md-course').innerText = escapeHTML(item.courseCode) + " " + escapeHTML(item.courseName); document.getElementById('md-credits').innerText = escapeHTML((item.credits || "").toString().replace(/^'/, ''));
+            document.getElementById('md-courseType').innerText = escapeHTML(item.courseType); document.getElementById('md-semester').innerText = formatSemesterDisplay(item.semester);
+            document.getElementById('md-level').innerText = escapeHTML(item.level); document.getElementById('md-major').innerText = escapeHTML(item.major); document.getElementById('md-field').innerText = escapeHTML(item.field || "-");
+            const c = document.getElementById('md-file-container');
+            if (item.fileUrl && item.fileUrl !== "-" && !item.fileUrl.includes("ลบไฟล์แล้ว")) c.innerHTML = `<div class="mb-3"><img src="${item.fileUrl}" class="img-fluid rounded border shadow-sm mb-2" style="max-height:350px; display:block; margin:auto;" onerror="this.style.display='none'"></div><a href="${item.fileUrl}" target="_blank" class="btn btn-sm btn-primary fw-bold px-4">🔗 เปิดเอกสาร</a>`;
+            else if (item.fileUrl && item.fileUrl.includes("ลบไฟล์แล้ว")) c.innerHTML = '<span class="text-danger fw-bold">🗑️ ไฟล์ถูกลบอัตโนมัติ</span>'; else c.innerHTML = '<span class="text-muted">ไม่มีการแนบไฟล์หลักฐาน</span>';
+            new bootstrap.Modal(document.getElementById('previewModal')).show();
+        }
+
+        function toggleRejectForm(show) { document.getElementById('reject-reason-block').style.display = show ? 'block' : 'none'; }
+        async function submitReview(status) {
+            let comment = status === "ไม่อนุมัติ" ? document.getElementById('md-reject-comment').value.trim() : "-";
+            if (status === "ไม่อนุมัติ" && !comment) { alert("⚠️ กรุณากรอกเหตุผลที่ไม่ผ่านอนุมัติ"); return; }
+            try {
+                const r = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "review", id: currentReviewId, status: status, comment: comment }), headers: { "Content-Type": "text/plain" } });
+                alert((await r.json()).message); bootstrap.Modal.getInstance(document.getElementById('previewModal')).hide(); loadAcademicData();
+            } catch (err) { alert("ไม่สามารถบันทึกผลได้"); }
+        }
+
+        async function loadSummaryData() {
+            const container = document.getElementById('summary-content-body'); container.innerHTML = '<div class="text-center p-4">⏳ กำลังรวบรวมและประมวลผลข้อมูล...</div>';
+            try {
+                const r = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "getSummaryData" }), headers: { "Content-Type": "text/plain" } });
+                const data = await r.json();
+                if (data.success) { globalSummaryData = processSummaryLogic(data.teachers, data.submissions); renderSelectedSummaryView(); }
+                else container.innerHTML = '<div class="text-center text-danger p-4">❌ ไม่สามารถดึงข้อมูลได้</div>';
+            } catch (e) { container.innerHTML = '<div class="text-center text-danger p-4">❌ โหลดข้อมูลล้มเหลว</div>'; }
+        }
+
+        function processSummaryLogic(teachers, submissions) {
+            let processedTeachers = teachers.map(t => {
+                let plans = submissions.filter(s => s.username === t.username && s.type === "แผนการสอน").length;
+                let currs = submissions.filter(s => s.username === t.username && s.type === "การพัฒนาหลักสูตร").length;
+                let target = t.subjectCount || 0;
+                let isComplete = (target > 0 && plans >= target && currs >= target);
+
+                return {
+                    ...t,
+                    plansSent: plans,
+                    currsSent: currs,
+                    plansMissing: target > 0 ? Math.max(0, target - plans) : 0,
+                    currsMissing: target > 0 ? Math.max(0, target - currs) : 0,
+                    isComplete: isComplete
+                };
+            });
+
+            let departments = {};
+            processedTeachers.forEach(t => {
+                let major = t.major || "ไม่ระบุสาขา";
+                if (!departments[major]) departments[major] = { name: major, teachersCount: 0, teachersIncomplete: 0, totalSubjects: 0, totalPlans: 0, totalCurrs: 0 };
+                departments[major].teachersCount++;
+                departments[major].totalSubjects += t.subjectCount;
+                departments[major].totalPlans += t.plansSent;
+                departments[major].totalCurrs += t.currsSent;
+                if (!t.isComplete) { departments[major].teachersIncomplete++; }
+            });
+
+            let overall = {
+                teachers: processedTeachers.length,
+                subjects: processedTeachers.reduce((sum, t) => sum + t.subjectCount, 0),
+                plans: processedTeachers.reduce((sum, t) => sum + t.plansSent, 0),
+                currs: processedTeachers.reduce((sum, t) => sum + t.currsSent, 0)
+            };
+            return { individuals: processedTeachers, departments: Object.values(departments), overall: overall };
+        }
+
+        function renderSelectedSummaryView() {
+            if (!globalSummaryData) return;
+            const viewType = document.getElementById('summary-view-selector').value; const container = document.getElementById('summary-content-body');
+
+            if (viewType === 'overall') {
+                let d = globalSummaryData.overall;
+                let pPercent = d.subjects > 0 ? Math.min(100, Math.round((d.plans / d.subjects) * 100)) : 0;
+                let cPercent = d.subjects > 0 ? Math.min(100, Math.round((d.currs / d.subjects) * 100)) : 0;
+                let completeCount = globalSummaryData.individuals.filter(t => t.isComplete).length;
+                let incompleteCount = d.teachers - completeCount;
+                let incompletePercent = d.teachers > 0 ? Math.round((incompleteCount / d.teachers) * 100) : 0;
+
+                container.innerHTML = `
+                <div class="row g-3">
+                    <div class="col-md-3"><div class="p-3 bg-white shadow-sm summary-card border-primary text-center"><h6 class="text-muted mb-1">จำนวนครูทั้งหมด</h6><h3 class="fw-bold text-primary mb-0">${d.teachers} <small class="fs-6 fw-normal">คน</small></h3></div></div>
+                    <div class="col-md-3"><div class="p-3 bg-white shadow-sm summary-card border-info text-center"><h6 class="text-muted mb-1">จำนวนวิชาทั้งหมด</h6><h3 class="fw-bold text-info mb-0">${d.subjects} <small class="fs-6 fw-normal">วิชา</small></h3></div></div>
+                    <div class="col-md-3"><div class="p-3 bg-white shadow-sm summary-card border-success text-center"><h6 class="text-muted mb-1">ส่งครบ 100%</h6><h3 class="fw-bold text-success mb-0">${completeCount} <small class="fs-6 fw-normal">คน</small></h3></div></div>
+                    <div class="col-md-3"><div class="p-3 bg-white shadow-sm summary-card border-danger text-center"><h6 class="text-muted mb-1">ขาดส่ง/ส่งไม่ครบ</h6><h3 class="fw-bold text-danger mb-0">${incompleteCount} <small class="fs-6 fw-normal">คน</small></h3><small class="text-danger fw-bold">(${incompletePercent}%)</small></div></div>
+                    
+                    <div class="col-md-6 mt-4"><div class="p-4 bg-light rounded border text-center"><h5 class="fw-bold text-success">📑 สรุปการส่งแผนการสอน</h5><h2 class="fw-bold mb-0">${d.plans} <span class="fs-5 text-muted">/ ${d.subjects} วิชา</span></h2><div class="progress mt-3" style="height: 20px;"><div class="progress-bar bg-success" style="width: ${pPercent}%">${pPercent}%</div></div></div></div>
+                    <div class="col-md-6 mt-4"><div class="p-4 bg-light rounded border text-center"><h5 class="fw-bold" style="color:#0dcaf0">📊 สรุปการส่งพัฒนาหลักสูตร</h5><h2 class="fw-bold mb-0">${d.currs} <span class="fs-5 text-muted">/ ${d.subjects} วิชา</span></h2><div class="progress mt-3" style="height: 20px;"><div class="progress-bar bg-info" style="width: ${cPercent}%">${cPercent}%</div></div></div></div>
+                </div>`;
+            }
+            else if (viewType === 'department') {
+                let html = '<div class="table-responsive"><table class="table table-bordered align-middle text-center"><thead class="table-light"><tr><th rowspan="2" class="align-middle">สาขาวิชา</th><th rowspan="2" class="align-middle">จำนวนครู (คน)</th><th rowspan="2" class="align-middle text-danger">ขาดส่ง (คน)</th><th rowspan="2" class="align-middle">จำนวนวิชาทั้งหมด</th><th colspan="2">แผนการสอน</th><th colspan="2">พัฒนาหลักสูตร</th></tr><tr><th class="text-success">ส่งแล้ว</th><th class="text-danger">ขาดส่ง</th><th class="text-info">ส่งแล้ว</th><th class="text-danger">ขาดส่ง</th></tr></thead><tbody>';
+                globalSummaryData.departments.forEach(d => {
+                    html += `<tr><td class="text-start fw-bold">${escapeHTML(d.name)}</td><td>${d.teachersCount}</td><td class="text-danger fw-bold">${d.teachersIncomplete}</td><td>${d.totalSubjects}</td><td class="text-success fw-bold">${d.totalPlans}</td><td class="text-danger">${Math.max(0, d.totalSubjects - d.totalPlans)}</td><td class="text-info fw-bold">${d.totalCurrs}</td><td class="text-danger">${Math.max(0, d.totalSubjects - d.totalCurrs)}</td></tr>`;
+                });
+                container.innerHTML = html + '</tbody></table></div>';
+            }
+            else if (viewType === 'individual') {
+                let html = '<div class="table-responsive"><table class="table table-hover align-middle text-center" style="font-size:0.9rem;"><thead class="table-light"><tr><th rowspan="2" class="align-middle text-start">ชื่อครูผู้สอน</th><th rowspan="2" class="align-middle">สาขาวิชา</th><th rowspan="2" class="align-middle">จำนวนวิชาทั้งหมด</th><th colspan="2">แผนการสอน</th><th colspan="2">พัฒนาหลักสูตร</th></tr><tr><th class="text-success">ส่ง</th><th class="text-danger">ขาด</th><th class="text-info">ส่ง</th><th class="text-danger">ขาด</th></tr></thead><tbody>';
+                globalSummaryData.individuals.forEach(t => {
+                    html += `<tr><td class="text-start">${escapeHTML(t.name)}</td><td><small>${escapeHTML(t.major)}</small></td><td><strong>${t.subjectCount}</strong></td><td class="text-success">${t.plansSent}</td><td class="text-danger fw-bold">${t.plansMissing}</td><td class="text-info">${t.currsSent}</td><td class="text-danger fw-bold">${t.currsMissing}</td></tr>`;
+                });
+                container.innerHTML = html + '</tbody></table></div>';
+            }
+        }
+    </script>
+</body>
+
+</html>
